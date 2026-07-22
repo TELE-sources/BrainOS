@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep \"\\\\.md$\")",
+      "Bash(D /Users/sader/BrainOS/packages/PLAN /Users/sader/BrainOS/packages/COUT /Users/sader/BrainOS/packages/TRAZ /Users/sader/BrainOS/packages/ENER)",
+      "Bash(grep -E \"^d.*web$\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(JSON.parse\\(require\\('fs'\\).readFileSync\\('package.json', 'utf8'\\)\\)\\);\")",
+      "Bash(kill %bynmdewvt *)",
+      "Bash(jobs *)",
+      "Bash(pkill *)",
+      "Bash(npm cache *)",
+      "Bash(xargs cat)",
+      "Bash(xargs ls -la)"
+    ]
+  }
+}

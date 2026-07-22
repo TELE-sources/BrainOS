@@ -1,0 +1,6 @@
+export enum ChartStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  OBSOLETE = 'OBSOLETE'
+}

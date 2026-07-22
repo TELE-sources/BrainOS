@@ -1,0 +1,7 @@
+export enum LabSampleType {
+  RAW_MATERIAL = 'RAW_MATERIAL',
+  SLURRY = 'SLURRY',
+  GREEN_CAKE = 'GREEN_CAKE',
+  AAC_BLOCK = 'AAC_BLOCK',
+  WATER = 'WATER'
+}

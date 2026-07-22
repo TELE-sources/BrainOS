@@ -1,0 +1,7 @@
+export enum LabSampleStatus {
+  RECEIVED = 'RECEIVED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  REJECTED = 'REJECTED',
+  ARCHIVED = 'ARCHIVED'
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@brainos/quality",
+  "version": "1.0.0",
+  "description": "eQMS - Enterprise Quality Management System",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/src"],
+    "testMatch": ["**/__tests__/**/*.spec.ts"],
+    "collectCoverageFrom": [
+      "src/**/*.service.ts",
+      "src/**/*.controller.ts",
+      "!**/__tests__/**",
+      "!**/node_modules/**"
+    ]
+  }
+}

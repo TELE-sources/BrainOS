@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrainERPOS — Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" rel="stylesheet">
+    <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --concrete: #EDEBE6;
+            --concrete-dim: #E1DED6;
+            --ink: #22262B;
+            --steel: #4A5A68;
+            --steel-dim: #6B7A87;
+            --aluminum: #C9CDD1;
+            --aluminum-line: #D6D9DC;
+            --safety: #D9600F;
+            --safety-dim: #F0DCC9;
+            --hse-red: #B23A2E;
+            --hse-red-dim: #F0D9D6;
+            --ok-green: #3E7A52;
+
+            --bg: var(--concrete);
+            --surface: #FFFFFF;
+            --text: var(--ink);
+            --text-soft: var(--steel);
+            --border: var(--aluminum-line);
+            --border-soft: var(--concrete-dim);
+        }
+        :root[data-theme="dark"] {
+            --bg: #1A1D21;
+            --surface: #24282D;
+            --text: #E7E5DF;
+            --text-soft: #93A0A8;
+            --border: #363B41;
+            --border-soft: #2E3237;
+            --safety-dim: #3A2A1C;
+            --hse-red-dim: #3A2320;
+        }
+        /* Les couleurs d'accentuation sont gérées via les classes .theme-* sur le html */
+        :root.theme-safety {
+            --safety: #D9600F;
+            --safety-dim: #F0DCC9;
+        }
+        :root.theme-steel {
+            --safety: #4A5A68;
+            --safety-dim: #E1E6EB;
+        }
+        :root.theme-ok {
+            --safety: #3E7A52;
+            --safety-dim: #E4EFE7;
+        }
+        :root.theme-hse {
+            --safety: #B23A2E;
+            --safety-dim: #F0D9D6;
+        }
+        /* Pour le dark on ajuste les nuances */
+        :root[data-theme="dark"].theme-safety {
+            --safety-dim: #3A2A1C;
+        }
+        :root[data-theme="dark"].theme-steel {
+            --safety-dim: #2E3237;
+        }
+        :root[data-theme="dark"].theme-ok {
+            --safety-dim: #1E2E24;
+        }
+        :root[data-theme="dark"].theme-hse {
+            --safety-dim: #3A2320;
+        }
+        /* ===== RESTE DU CSS (inchangé) ===== */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'IBM Plex Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .mono { font-family: 'IBM Plex Mono', monospace; }
+        .display { font-family: 'Space Grotesk', sans-serif; }
+
+        .shell {
+            display: grid;
+            grid-template-columns: 284px 1fr;
+            min-height: 100vh;
+            transition: grid-template-columns .22s ease;
+        }
+        .shell.collapsed { grid-template-columns: 76px 1fr; }
+
+        .sidebar {
+            background: var(--ink);
+            color: var(--concrete);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+        .sidebar-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 28px 16px 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .brand-label {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .collapse-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255,255,255,0.06);
+            color: var(--aluminum);
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background .15s ease, transform .22s ease;
+        }
+        .collapse-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .shell.collapsed .collapse-btn { transform: rotate(180deg); }
+
+        .brand .mark {
+            width: 10px;
+            height: 10px;
+            background: var(--safety);
+            border-radius: 2px;
+            display: inline-block;
+        }
+        .brand span {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 17px;
+            letter-spacing: 0.02em;
+        }
+        .brand small {
+            display: block;
+            color: var(--aluminum);
+            font-size: 10.5px;
+            letter-spacing: 0.08em;
+            margin-top: 2px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .nav-group { margin-bottom: 14px; }
+        .nav-group-label {
+            font-size: 10.5px;
+            letter-spacing: 0.09em;
+            color: var(--steel-dim);
+            text-transform: uppercase;
+            padding: 6px 10px 6px;
+            font-weight: 500;
+        }
+
+        .pillar {
+            border-radius: 6px;
+            margin-bottom: 1px;
+        }
+        .pillar summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13.5px;
+            color: var(--aluminum);
+            cursor: pointer;
+            list-style: none;
+            transition: background .15s ease;
+        }
+        .pillar summary::-webkit-details-marker { display: none; }
+        .pillar summary:hover { background: rgba(255,255,255,0.06); }
+        .pillar summary .chevron {
+            font-size: 9px;
+            color: var(--steel-dim);
+            transition: transform .15s ease;
+        }
+        .pillar[open] summary .chevron { transform: rotate(90deg); }
+        .pillar[open] summary { color: #fff; }
+        .pillar.active summary {
+            background: rgba(217,96,15,0.16);
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .picon, .gicon {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        .pillar summary .picon {
+            font-size: 17px;
+            color: var(--steel-dim);
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .pillar[open] summary .picon,
+        .pillar.active summary .picon { color: var(--safety); }
+        .pillar summary .name { flex: 1; }
+
+        .modules {
+            padding: 2px 0 6px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .modules a {
+            display: block;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 12.5px;
+            color: #fff;
+            text-decoration: none;
+            border-left: 1.5px solid rgba(255,255,255,0.08);
+            padding-left: 12px;
+            background: rgba(217,96,15,0.16);
+        }
+        .modules a:hover { background: rgba(217,96,15,0.26); color: #fff; }
+
+        .modules-nested {
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .modules-nested::-webkit-scrollbar { width: 5px; }
+        .modules-nested::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .modules-nested .group { margin-bottom: 1px; }
+        .modules-nested .group>summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #fff;
+            background: rgba(217,96,15,0.16);
+        }
+        .modules-nested .group>summary::-webkit-details-marker { display: none; }
+        .modules-nested .group>summary:hover { background: rgba(217,96,15,0.26); color: #fff; }
+        .modules-nested .group .gicon {
+            font-size: 15px;
+            width: 16px;
+            text-align: center;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .modules-nested .group[open]>summary .gicon { color: #fff; }
+        .modules-nested .group .gname {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .modules-nested .group .gchevron {
+            font-size: 9px;
+            color: #fff;
+            transition: transform .15s ease;
+            flex-shrink: 0;
+        }
+        .modules-nested .group[open]>summary .gchevron {
+            transform: rotate(90deg);
+            color: #fff;
+        }
+        .modules-nested .group .leaf-items {
+            display: flex;
+            flex-direction: column;
+            padding-left: 26px;
+            border-left: 1px solid rgba(255,255,255,0.06);
+            margin-left: 15px;
+        }
+        .modules-nested .group .leaf-items a {
+            font-size: 11.5px;
+            padding: 5px 8px;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background .15s ease, color .15s ease;
+            background: rgba(217,96,15,0.16);
+        }
+        .modules-nested .group .leaf-items a:hover {
+            background: rgba(217,96,15,0.26);
+            color: #fff;
+        }
+
+        .sidebar-footer {
+            flex-shrink: 0;
+            padding: 10px 16px 14px 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        .footer-panel {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height .22s ease, opacity .18s ease, margin .22s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .footer-panel.open {
+            max-height: 260px;
+            opacity: 1;
+            margin-bottom: 10px;
+        }
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+        }
+        .theme-toggle .lbl {
+            font-size: 12.5px;
+            color: var(--aluminum);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: rgba(255,255,255,0.14);
+            border-radius: 20px;
+            cursor: pointer;
+            border: none;
+            flex-shrink: 0;
+        }
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--concrete);
+            border-radius: 50%;
+            transition: transform .18s ease;
+        }
+        :root[data-theme="dark"] .switch { background: var(--safety); }
+        :root[data-theme="dark"] .switch::after { transform: translateX(16px); }
+
+        .theme-swatches {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px 10px;
+        }
+        .theme-swatches .lbl { font-size: 12.5px; color: var(--aluminum); }
+        .swatch-row { display: flex; gap: 6px; }
+        .swatch {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+        }
+        .swatch.active { border-color: #fff; }
+        .swatch.safety { background: #D9600F; }
+        .swatch.steel { background: #4A5A68; }
+        .swatch.ok { background: #3E7A52; }
+        .swatch.hse { background: #B23A2E; }
+        .swatch.sap { background: #1D4F9C; }
+        .swatch.siemens { background: #006F8E; }
+        .swatch.aveva { background: #C85A17; }
+
+        .footer-links { display: flex; flex-direction: column; gap: 1px; }
+        .footer-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            color: var(--aluminum);
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .15s ease;
+        }
+        .footer-link:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .footer-link .ic {
+            width: 15px;
+            text-align: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .footer-account {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background .15s ease;
+        }
+        .footer-account:hover { background: rgba(255,255,255,0.06); }
+        .footer-account .av {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--concrete);
+            flex-shrink: 0;
+        }
+        .footer-account .who { min-width: 0; flex: 1; }
+        .footer-account .name {
+            font-size: 12.5px;
+            color: var(--concrete);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .footer-account .role {
+            font-size: 10.5px;
+            color: var(--steel-dim);
+        }
+        .footer-account .acc-chevron {
+            font-size: 10px;
+            color: var(--steel-dim);
+            flex-shrink: 0;
+            transition: transform .2s ease;
+        }
+        .footer-account.open .acc-chevron { transform: rotate(90deg); }
+
+        .shell.collapsed .sidebar-scroll {
+            padding: 28px 8px 16px 8px;
+            align-items: center;
+        }
+        .shell.collapsed .brand-label,
+        .shell.collapsed .nav-group-label,
+        .shell.collapsed .nav-item .name,
+        .shell.collapsed .nav-item .num,
+        .shell.collapsed .pillar summary .name,
+        .shell.collapsed .pillar summary .chevron,
+        .shell.collapsed .modules,
+        .shell.collapsed .footer-panel,
+        .shell.collapsed .footer-account .who,
+        .shell.collapsed .footer-account .acc-chevron { display: none; }
+        .shell.collapsed .pillar summary,
+        .shell.collapsed .nav-item { justify-content: center; padding: 8px; }
+        .shell.collapsed .pillar summary .picon { font-size: 17px; }
+        .shell.collapsed .footer-account { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* ===== MAIN CONTENT ===== */
+        main {
+            padding: 32px 40px 60px;
+            max-width: 1180px;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        .greeting h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 26px;
+            font-weight: 600;
+            margin: 0 0 4px;
+        }
+        .greeting p {
+            margin: 0;
+            color: var(--text-soft);
+            font-size: 13.5px;
+        }
+        .greeting .lot {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--aluminum);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .bell {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .bell .dot {
+            position: absolute;
+            top: 6px;
+            right: 7px;
+            width: 7px;
+            height: 7px;
+            background: var(--hse-red);
+            border-radius: 50%;
+        }
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: var(--ink);
+            color: var(--concrete);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .hero {
+            background: var(--ink);
+            border-radius: 16px;
+            padding: 28px 32px;
+            display: grid;
+            grid-template-columns: 1fr 240px;
+            gap: 24px;
+            align-items: center;
+            color: var(--concrete);
+            margin-bottom: 24px;
+        }
+        .hero-info .eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            color: var(--safety);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .hero-info h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            margin: 0 0 12px;
+            font-weight: 600;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 28px;
+        }
+        .hero-stat .val {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 24px;
+            font-weight: 500;
+        }
+        .hero-stat .val small {
+            font-size: 13px;
+            color: var(--aluminum);
+        }
+        .hero-stat .lbl {
+            font-size: 11.5px;
+            color: var(--steel-dim);
+            margin-top: 2px;
+        }
+
+        .gauge-wrap {
+            display: flex;
+            justify-content: center;
+        }
+        .gauge {
+            position: relative;
+            width: 170px;
+            height: 170px;
+        }
+        .gauge svg {
+            transform: rotate(-90deg);
+        }
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.08);
+            stroke-width: 10;
+        }
+        .gauge-fg {
+            fill: none;
+            stroke: var(--safety);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 408;
+            stroke-dashoffset: 110;
+            animation: pulse 3.2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { stroke-dashoffset: 112; }
+            50% { stroke-dashoffset: 98; }
+        }
+        .gauge-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .gauge-center .temp {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 26px;
+            font-weight: 500;
+        }
+        .gauge-center .bar {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12.5px;
+            color: var(--aluminum);
+            margin-top: 2px;
+        }
+        .gauge-center .status {
+            font-size: 9.5px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--ok-green);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .gauge-center .status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--ok-green);
+            animation: blink 1.6s ease-in-out infinite;
+        }
+        @keyframes blink { 50% { opacity: .35; } }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kpi {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .kpi .lbl {
+            font-size: 11.5px;
+            color: var(--text-soft);
+            letter-spacing: .03em;
+        }
+        .kpi .val {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        .kpi .delta {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11.5px;
+            margin-top: 4px;
+        }
+        .delta.up { color: var(--ok-green); }
+        .delta.warn { color: var(--safety); }
+        .delta.crit { color: var(--hse-red); }
+
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-head h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+            margin: 0;
+        }
+        .section-head p {
+            font-size: 12px;
+            color: var(--text-soft);
+            margin: 0;
+        }
+        .grid-group-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10.5px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-soft);
+            margin: 20px 0 10px;
+        }
+        .grid-group-label:first-child { margin-top: 0; }
+        .pillar-grid {
+            display: grid;
+            grid-template-columns: repeat(6,1fr);
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .ptile {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 13px;
+            position: relative;
+        }
+        .ptile .top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .ptile .pnum {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--steel-dim);
+        }
+        .ptile .customize {
+            font-size: 12px;
+            color: var(--steel-dim);
+            cursor: pointer;
+            padding: 1px 4px;
+            border-radius: 4px;
+            line-height: 1;
+        }
+        .ptile .customize:hover {
+            background: var(--border-soft);
+            color: var(--text);
+        }
+        .ptile .pname {
+            font-size: 11.5px;
+            color: var(--text-soft);
+            margin-bottom: 6px;
+            min-height: 14px;
+        }
+        .ptile .pval-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        .ptile .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+        .dot.ok { background: var(--ok-green); }
+        .dot.warn { background: var(--safety); }
+        .dot.crit { background: var(--hse-red); }
+        .ptile .pval {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 17px;
+            font-weight: 500;
+        }
+        .ptile .plbl {
+            font-size: 10px;
+            color: var(--steel-dim);
+            margin-top: 2px;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px 24px;
+        }
+        .panel h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15.5px;
+            margin: 0 0 16px;
+        }
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 11px 0;
+            border-bottom: 1px solid var(--border-soft);
+            font-size: 13.5px;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .tag {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            white-space: nowrap;
+            margin-top: 1px;
+        }
+        .tag.ok { background: #E4EFE7; color: var(--ok-green); }
+        .tag.pending { background: var(--safety-dim); color: var(--safety); }
+        .tag.hse { background: var(--hse-red-dim); color: var(--hse-red); }
+        .activity-item .txt { color: var(--text); }
+        .activity-item .meta {
+            color: var(--text-soft);
+            font-size: 11.5px;
+            margin-left: auto;
+            font-family: 'IBM Plex Mono', monospace;
+            white-space: nowrap;
+        }
+
+        @media (max-width:1100px) { .pillar-grid { grid-template-columns: repeat(4,1fr); } }
+        @media (max-width:880px) {
+            .shell { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .hero { grid-template-columns: 1fr; }
+            .gauge-wrap { order: -1; }
+            .pillar-grid { grid-template-columns: repeat(3,1fr); }
+            main { padding: 24px 20px 40px; }
+        }
+        @media (max-width:520px) { .pillar-grid { grid-template-columns: repeat(2,1fr); } }
+    :root.theme-sap {
+            --safety: #1D4F9C;
+            --safety-dim: #E6EFF5;
+        }
+        :root.theme-siemens {
+            --safety: #006F8E;
+            --safety-dim: #E0F2F5;
+        }
+        :root.theme-aveva {
+            --safety: #C85A17;
+            --safety-dim: #F8ECE6;
+        }
+        /* Pour le dark on ajuste les nuances */
+        :root[data-theme="dark"].theme-sap {
+            --safety-dim: #0D2A4F;
+        }
+        :root[data-theme="dark"].theme-siemens {
+            --safety-dim: #003B4A;
+        }
+        :root[data-theme="dark"].theme-aveva {
+            --safety-dim: #6A2E0B;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar">
+            <div class="sidebar-scroll">
+                <div class="brand">
+                    <div class="brand-label">
+                        <span class="mark"></span>
+                        <span>BrainERPOS</span>
+                    </div>
+                    <button class="collapse-btn" type="button" aria-label="Réduire/agrandir le menu" onclick="document.querySelector('.shell').classList.toggle('collapsed')">«</button>
+                </div>
+                <div style="margin-top:-20px"><small class="mono">BCA GAFSA · AAC</small></div>
+
+                <nav>
+                    <!-- ===================== GROUP 1: CORE BUSINESS ===================== -->
+                    <div class="nav-group">
+                        <div class="nav-group-label">Core Business</div>
+
+                        <!-- 1- Production & Operations -->
+                        <details class="pillar" open>
+                            <summary><span class="picon" aria-hidden="true">factory</span><span class="name">1- Production &amp; Operations</span><span class="chevron">▸</span></summary>
+                            <div class="modules modules-nested">
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">dashboard</span><span class="gname">📊 Dashboard</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Production Overview</a><a href="#">Live Production</a><a href="#">Production KPIs</a><a href="#">OEE Dashboard</a><a href="#">Shift Dashboard</a><a href="#">Plant Status</a><a href="#">Live Equipment</a><a href="#">Alerts &amp; Events</a><a href="#">Production Map</a><a href="#">Executive Dashboard</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">calendar_month</span><span class="gname">📅 Planning</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Sales Forecast</a><a href="#">Demand Planning</a><a href="#">MPS</a><a href="#">MRP</a><a href="#">Capacity Planning</a><a href="#">Finite Scheduling</a><a href="#">Shift Planning</a><a href="#">Workforce Planning</a><a href="#">Production Calendar</a><a href="#">Maintenance Constraints</a><a href="#">Scenario Simulation</a><a href="#">What-if Analysis</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">science</span><span class="gname">🧪 Formulations</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Recipes</a><a href="#">Recipe Versions</a><a href="#">Ingredients</a><a href="#">Raw Materials</a><a href="#">Dosage Management</a><a href="#">Water/Cement Ratio</a><a href="#">Aluminum Powder</a><a href="#">Slurry Density</a><a href="#">Mix Parameters</a><a href="#">Density Targets</a><a href="#">Recipe Validation</a><a href="#">Quality Constraints</a><a href="#">Recipe Approval</a><a href="#">Cost Simulation</a><a href="#">AI Recipe Optimization</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">assignment</span><span class="gname">📋 Production Orders</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Work Orders</a><a href="#">Batch Orders</a><a href="#">Production Execution</a><a href="#">Order Tracking</a><a href="#">Order Priority</a><a href="#">Order Status</a><a href="#">Order History</a><a href="#">Rework Orders</a><a href="#">Production Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">settings</span><span class="gname">⚙ Manufacturing Execution (MES)</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Batch Management</a><a href="#">Material Weighing</a><a href="#">Mixing</a><a href="#">Casting</a><a href="#">Expansion</a><a href="#">Green Cake</a><a href="#">Pre-Curing</a><a href="#">Demolding</a><a href="#">Cutting</a><a href="#">Wire Management</a><a href="#">Mold Management</a><a href="#">Waste Recycling</a><a href="#">Packaging</a><a href="#">Palletizing</a><a href="#">Finished Goods</a><a href="#">Production Reports</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">tram</span><span class="gname">🚃 Wagon Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Wagon Fleet</a><a href="#">Loading</a><a href="#">Dispatch</a><a href="#">Autoclave Queue</a><a href="#">Wagon Tracking</a><a href="#">Maintenance Status</a><a href="#">Wagon History</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">local_fire_department</span><span class="gname">🔥 Steam &amp; Boiler Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Boiler Dashboard</a><a href="#">Boiler Units</a><a href="#">Burners</a><a href="#">Fuel Management</a><a href="#">Steam Generation</a><a href="#">Steam Pressure</a><a href="#">Steam Temperature</a><a href="#">Steam Flow</a><a href="#">Steam Quality</a><a href="#">Water Level</a><a href="#">Feed Water</a><a href="#">Water Treatment</a><a href="#">Blowdown</a><a href="#">Safety Valves</a><a href="#">Boiler Efficiency</a><a href="#">Boiler Alarms</a><a href="#">Boiler Logs</a><a href="#">Boiler KPIs</a><a href="#">Energy Consumption</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">device_thermostat</span><span class="gname">♨ Autoclave Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Autoclave Dashboard</a><a href="#">Loading</a><a href="#">Wagon Position</a><a href="#">Cycle Scheduling</a><a href="#">Steam Injection</a><a href="#">Pressure Profile</a><a href="#">Temperature Profile</a><a href="#">Holding Time</a><a href="#">Cooling</a><a href="#">Unloading</a><a href="#">Cycle Validation</a><a href="#">Steam Consumption</a><a href="#">Energy Consumption</a><a href="#">Batch Association</a><a href="#">Operator Logs</a><a href="#">Cycle History</a><a href="#">Cycle Reports</a><a href="#">Autoclave KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">sensors</span><span class="gname">📡 Production Monitoring</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Live Production</a><a href="#">Machine Status</a><a href="#">PLC Status</a><a href="#">SCADA Integration</a><a href="#">Production Timeline</a><a href="#">Alarms</a><a href="#">Events</a><a href="#">Bottleneck Analysis</a><a href="#">Production Delays</a><a href="#">Shift Performance</a><a href="#">Real-Time Dashboard</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">trending_up</span><span class="gname">📈 OEE</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Availability</a><a href="#">Performance</a><a href="#">Quality</a><a href="#">Downtime</a><a href="#">Micro Stops</a><a href="#">Scrap Analysis</a><a href="#">Yield</a><a href="#">Productivity</a><a href="#">Utilization</a><a href="#">KPIs</a><a href="#">OEE Trends</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">precision_manufacturing</span><span class="gname">🏗 Resource Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Production Lines</a><a href="#">Machines</a><a href="#">Silos</a><a href="#">Mixers</a><a href="#">Pumps</a><a href="#">Molds</a><a href="#">Cutting Wires</a><a href="#">Wagons</a><a href="#">Autoclaves</a><a href="#">Boilers</a><a href="#">Steam Network</a><a href="#">Compressors</a><a href="#">Utilities</a><a href="#">Operators</a><a href="#">Production Teams</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">search</span><span class="gname">🔍 Traceability</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Raw Materials</a><a href="#">Suppliers</a><a href="#">Lots</a><a href="#">Recipes</a><a href="#">Production Batches</a><a href="#">Green Cakes</a><a href="#">Molds</a><a href="#">Wagons</a><a href="#">Autoclave Cycles</a><a href="#">Machines</a><a href="#">Operators</a><a href="#">Finished Products</a><a href="#">Pallets</a><a href="#">Customers</a><a href="#">Recall Management</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">insights</span><span class="gname">📊 Performance Analysis</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Production KPIs</a><a href="#">Throughput</a><a href="#">Yield</a><a href="#">Waste</a><a href="#">Scrap</a><a href="#">Cycle Time</a><a href="#">Steam Consumption</a><a href="#">Gas Consumption</a><a href="#">Electricity</a><a href="#">Water Consumption</a><a href="#">Production Cost</a><a href="#">Variance Analysis</a><a href="#">AI Predictions</a><a href="#">Benchmarking</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">description</span><span class="gname">📑 Reports</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Daily Production</a><a href="#">Shift Reports</a><a href="#">Batch Reports</a><a href="#">Recipe Reports</a><a href="#">Boiler Reports</a><a href="#">Steam Reports</a><a href="#">Autoclave Reports</a><a href="#">Energy Reports</a><a href="#">OEE Reports</a><a href="#">Scrap Reports</a><a href="#">Traceability Reports</a><a href="#">Regulatory Reports</a><a href="#">Executive Reports</a></div></details>
+                            </div>
+                        </details>
+
+                        <!-- 2- Enterprise Financial Management -->
+                        <details class="pillar">
+                            <summary><span class="picon" aria-hidden="true">payments</span><span class="name">2- Enterprise Financial Management</span><span class="chevron">▸</span></summary>
+                            <div class="modules modules-nested">
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">dashboard</span><span class="gname">🏦 Executive Finance Cockpit</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">CFO Dashboard</a><a href="#">Financial Health Index</a><a href="#">Enterprise KPIs</a><a href="#">Cash Position</a><a href="#">Working Capital</a><a href="#">Profitability</a><a href="#">EBITDA</a><a href="#">Financial Forecast</a><a href="#">AI Financial Assistant</a><a href="#">Executive Cockpit</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">menu_book</span><span class="gname">📚 Financial Accounting (FI)</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">General Ledger</a><a href="#">Chart of Accounts</a><a href="#">Journal Entries</a><a href="#">Accounts Payable</a><a href="#">Accounts Receivable</a><a href="#">Fixed Assets</a><a href="#">Bank Accounting</a><a href="#">Tax Management</a><a href="#">Closing Operations</a><a href="#">Financial Statements</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">account_balance_wallet</span><span class="gname">💵 Treasury &amp; Cash Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Cash Position</a><a href="#">Cash Forecast</a><a href="#">Liquidity Planning</a><a href="#">Bank Accounts</a><a href="#">Bank Reconciliation</a><a href="#">Payment Factory</a><a href="#">Collections</a><a href="#">Financing</a><a href="#">Foreign Exchange</a><a href="#">Treasury KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">trending_up</span><span class="gname">📈 Financial Planning &amp; Budgeting</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Annual Budget</a><a href="#">Rolling Forecast</a><a href="#">Operational Budget</a><a href="#">CAPEX Budget</a><a href="#">OPEX Budget</a><a href="#">Scenario Planning</a><a href="#">What-if Simulation</a><a href="#">Driver-Based Planning</a><a href="#">AI Budget Optimization</a><a href="#">Budget Control</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">point_of_sale</span><span class="gname">🏭 Cost Accounting &amp; Controlling (CO)</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Cost Centers</a><a href="#">Profit Centers</a><a href="#">Internal Orders</a><a href="#">Activity Costing</a><a href="#">Standard Cost</a><a href="#">Actual Cost</a><a href="#">Variance Analysis</a><a href="#">Product Costing</a><a href="#">Manufacturing Cost</a><a href="#">Margin Analysis</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">construction</span><span class="gname">🧱 AAC Production Cost Intelligence</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Recipe Cost</a><a href="#">Raw Material Cost</a><a href="#">Steam Cost</a><a href="#">Boiler Cost</a><a href="#">Autoclave Cost</a><a href="#">Energy Cost</a><a href="#">Labor Cost</a><a href="#">Packaging Cost</a><a href="#">Logistics Cost</a><a href="#">Cost per Batch</a><a href="#">Cost per m³</a><a href="#">Cost per Product</a><a href="#">Waste Cost</a><a href="#">Scrap Cost</a><a href="#">Rework Cost</a><a href="#">Carbon Cost</a><a href="#">Maintenance Cost Allocation</a><a href="#">Utility Cost Allocation</a><a href="#">Customer Profitability</a><a href="#">Product Profitability</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">build</span><span class="gname">🏗 CAPEX &amp; Investment Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Investment Portfolio</a><a href="#">Capital Requests</a><a href="#">Business Cases</a><a href="#">ROI Analysis</a><a href="#">NPV Analysis</a><a href="#">IRR Analysis</a><a href="#">Payback Period</a><a href="#">Project Budget</a><a href="#">Asset Commissioning</a><a href="#">Investment KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">hub</span><span class="gname">🏢 Multi-Company &amp; Consolidation</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Multi-Entity</a><a href="#">Multi-Plant</a><a href="#">Multi-Currency</a><a href="#">Multi-GAAP</a><a href="#">Intercompany</a><a href="#">Transfer Pricing</a><a href="#">Consolidation</a><a href="#">Elimination Entries</a><a href="#">Group Reporting</a><a href="#">Corporate Finance</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">local_shipping</span><span class="gname">📦 Procurement Finance</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Purchase Commitments</a><a href="#">Supplier Payments</a><a href="#">Purchase Variances</a><a href="#">Contract Cost</a><a href="#">Procurement Savings</a><a href="#">Spend Analysis</a><a href="#">Supplier Profitability</a><a href="#">Strategic Sourcing Cost</a><a href="#">Purchase Forecast</a><a href="#">Procurement KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">inventory</span><span class="gname">🚚 Supply Chain Finance</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Inventory Valuation</a><a href="#">Inventory Turnover</a><a href="#">Warehouse Cost</a><a href="#">Logistics Cost</a><a href="#">Freight Cost</a><a href="#">Distribution Cost</a><a href="#">Delivery Cost</a><a href="#">Stock Financing</a><a href="#">Working Capital</a><a href="#">Supply Chain KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">eco</span><span class="gname">🌍 ESG Financial Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Carbon Accounting</a><a href="#">Environmental Cost</a><a href="#">Sustainability Investments</a><a href="#">ESG Budget</a><a href="#">Green CAPEX</a><a href="#">Carbon Tax</a><a href="#">Carbon Credits</a><a href="#">ESG ROI</a><a href="#">Sustainability Savings</a><a href="#">ESG KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">gpp_maybe</span><span class="gname">⚖ Financial Risk &amp; Compliance</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Internal Controls</a><a href="#">Fraud Detection</a><a href="#">Financial Audit</a><a href="#">SOX Controls</a><a href="#">Tax Compliance</a><a href="#">Credit Risk</a><a href="#">Currency Risk</a><a href="#">Liquidity Risk</a><a href="#">Insurance Management</a><a href="#">Risk KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">psychology</span><span class="gname">🤖 Financial AI</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Revenue Forecast</a><a href="#">Cost Forecast</a><a href="#">Margin Prediction</a><a href="#">Cash Prediction</a><a href="#">Fraud Detection AI</a><a href="#">AI Cost Optimization</a><a href="#">AI Investment Advisor</a><a href="#">AI Financial Copilot</a><a href="#">AI Scenario Planning</a><a href="#">AI Recommendations</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">query_stats</span><span class="gname">📊 Financial Analytics</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Financial KPIs</a><a href="#">Executive Scorecards</a><a href="#">Benchmarking</a><a href="#">Profitability Analysis</a><a href="#">Cost Drivers</a><a href="#">Financial Heat Maps</a><a href="#">Trend Analysis</a><a href="#">Predictive Analytics</a><a href="#">Executive Insights</a><a href="#">AI Insights</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">description</span><span class="gname">📑 Financial Reporting</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Balance Sheet</a><a href="#">Income Statement</a><a href="#">Cash Flow</a><a href="#">Trial Balance</a><a href="#">Management Reports</a><a href="#">Board Reports</a><a href="#">Consolidation Reports</a><a href="#">Regulatory Reports</a><a href="#">ESG Financial Reports</a><a href="#">Executive Reports</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">link</span><span class="gname">🔗 Financial Integration</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">ERP Integration</a><a href="#">MES Integration</a><a href="#">Production Integration</a><a href="#">Procurement Integration</a><a href="#">Inventory Integration</a><a href="#">HR Payroll</a><a href="#">Banking APIs</a><a href="#">Tax Systems</a><a href="#">Corporate Systems</a><a href="#">Business Intelligence</a></div></details>
+                            </div>
+                        </details>
+
+                        <!-- 3- Enterprise Accounting -->
+                        <details class="pillar">
+                            <summary><span class="picon" aria-hidden="true">calculate</span><span class="name">3- Enterprise Accounting</span><span class="chevron">▸</span></summary>
+                            <div class="modules modules-nested">
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">dashboard</span><span class="gname">🏠 Accounting Command Center</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Chief Accountant Dashboard</a><a href="#">Financial Health Overview</a><a href="#">Daily Accounting Status</a><a href="#">Pending Journal Entries</a><a href="#">Unposted Transactions</a><a href="#">Closing Progress</a><a href="#">Tax Status</a><a href="#">Audit Alerts</a><a href="#">AI Accounting Assistant</a><a href="#">Executive Dashboard</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">menu_book</span><span class="gname">📖 General Ledger (GL)</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Chart of Accounts</a><a href="#">Journal Entries</a><a href="#">Journal Templates</a><a href="#">Automatic Posting</a><a href="#">Recurring Entries</a><a href="#">Allocation Rules</a><a href="#">Multi-Ledger</a><a href="#">Multi-GAAP</a><a href="#">Consolidation Ledger</a><a href="#">Ledger Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">request_quote</span><span class="gname">💳 Accounts Payable (AP)</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Supplier Invoices</a><a href="#">Invoice Matching (2-way / 3-way)</a><a href="#">Payment Proposals</a><a href="#">Payment Processing</a><a href="#">Credit Notes</a><a href="#">Advance Payments</a><a href="#">Retentions</a><a href="#">Supplier Statements</a><a href="#">Aging Analysis</a><a href="#">AP Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">receipt_long</span><span class="gname">🧾 Accounts Receivable (AR)</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Customer Invoices</a><a href="#">Credit Notes</a><a href="#">Customer Payments</a><a href="#">Collections</a><a href="#">Customer Statements</a><a href="#">Dunning Management</a><a href="#">Credit Limits</a><a href="#">Aging Analysis</a><a href="#">Revenue Recognition</a><a href="#">AR Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">domain</span><span class="gname">🏢 Fixed Assets</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Asset Register</a><a href="#">Asset Categories</a><a href="#">Acquisition</a><a href="#">Depreciation</a><a href="#">Transfer</a><a href="#">Revaluation</a><a href="#">Asset Retirement</a><a href="#">Physical Inventory</a><a href="#">Asset Lifecycle</a><a href="#">Asset Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">factory</span><span class="gname">🏭 Industrial Assets</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Production Lines</a><a href="#">Boilers</a><a href="#">Autoclaves</a><a href="#">Crushers</a><a href="#">Silos</a><a href="#">Compressors</a><a href="#">Steam Network</a><a href="#">Buildings</a><a href="#">Utilities</a><a href="#">Capital Equipment</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">account_balance_wallet</span><span class="gname">💵 Banking &amp; Payments</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Bank Accounts</a><a href="#">Electronic Payments</a><a href="#">Bank Statements</a><a href="#">Automatic Reconciliation</a><a href="#">Cash Receipts</a><a href="#">Cash Disbursements</a><a href="#">SEPA</a><a href="#">SWIFT</a><a href="#">Payment Gateway</a><a href="#">Banking Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">gavel</span><span class="gname">🧾 Tax Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">VAT</a><a href="#">Withholding Tax</a><a href="#">Corporate Tax</a><a href="#">Customs Duties</a><a href="#">Environmental Taxes</a><a href="#">Carbon Tax</a><a href="#">Tax Declarations</a><a href="#">Electronic Filing</a><a href="#">Tax Audit</a><a href="#">Tax Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">event_available</span><span class="gname">📆 Financial Closing</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Daily Close</a><a href="#">Monthly Close</a><a href="#">Quarterly Close</a><a href="#">Annual Close</a><a href="#">Closing Checklist</a><a href="#">Automatic Accruals</a><a href="#">Reconciliations</a><a href="#">Closing Workflow</a><a href="#">Closing Calendar</a><a href="#">Close KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">hub</span><span class="gname">🌍 Multi-Company Accounting</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Multi-Company</a><a href="#">Multi-Plant</a><a href="#">Multi-Currency</a><a href="#">Multi-Language</a><a href="#">Multi-GAAP</a><a href="#">Intercompany Accounting</a><a href="#">Consolidation</a><a href="#">Elimination Entries</a><a href="#">Group Accounting</a><a href="#">Corporate Ledger</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">lock</span><span class="gname">⚖ Audit &amp; Compliance</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Audit Trail</a><a href="#">Internal Controls</a><a href="#">Segregation of Duties</a><a href="#">Approval Matrix</a><a href="#">Electronic Signatures</a><a href="#">Document Traceability</a><a href="#">Regulatory Compliance</a><a href="#">External Audit</a><a href="#">Internal Audit</a><a href="#">Compliance KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">psychology</span><span class="gname">🤖 Intelligent Accounting</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Automatic Journal Posting</a><a href="#">Invoice OCR</a><a href="#">AI Invoice Recognition</a><a href="#">AI Account Suggestion</a><a href="#">AI Fraud Detection</a><a href="#">Duplicate Invoice Detection</a><a href="#">AI Reconciliation</a><a href="#">AI Closing Assistant</a><a href="#">AI Accounting Copilot</a><a href="#">AI Compliance Check</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">query_stats</span><span class="gname">📊 Accounting Analytics</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Trial Balance</a><a href="#">Balance Sheet</a><a href="#">Income Statement</a><a href="#">Cash Flow</a><a href="#">General Ledger Analytics</a><a href="#">AP Analytics</a><a href="#">AR Analytics</a><a href="#">Asset Analytics</a><a href="#">Tax Analytics</a><a href="#">Executive Accounting KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">description</span><span class="gname">📑 Statutory Reporting</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Financial Statements</a><a href="#">Regulatory Reports</a><a href="#">Tax Reports</a><a href="#">IFRS Reports</a><a href="#">Local GAAP Reports</a><a href="#">Consolidated Reports</a><a href="#">Audit Reports</a><a href="#">XBRL Reporting</a><a href="#">Government Filing</a><a href="#">Digital Archive</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">link</span><span class="gname">🔗 Enterprise Integration</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Procurement</a><a href="#">Sales</a><a href="#">Production</a><a href="#">MES</a><a href="#">Maintenance</a><a href="#">Inventory</a><a href="#">Payroll</a><a href="#">Treasury</a><a href="#">Business Intelligence</a><a href="#">Corporate ERP</a></div></details>
+                            </div>
+                        </details>
+
+                        <!-- 4- Commercial Excellence & Sales Management -->
+                        <details class="pillar">
+                            <summary><span class="picon" aria-hidden="true">handshake</span><span class="name">4- Commercial Excellence &amp; Sales Management</span><span class="chevron">▸</span></summary>
+                            <div class="modules modules-nested">
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">dashboard</span><span class="gname">🏠 Sales Command Center</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">CEO Sales Dashboard</a><a href="#">Sales Director Dashboard</a><a href="#">Regional Dashboard</a><a href="#">Sales KPIs</a><a href="#">Revenue Dashboard</a><a href="#">Margin Dashboard</a><a href="#">Customer Health</a><a href="#">Forecast Dashboard</a><a href="#">AI Sales Assistant</a><a href="#">Executive Cockpit</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">contacts</span><span class="gname">👥 Customer Master Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Customer Master</a><a href="#">Customer Groups</a><a href="#">Customer Hierarchy</a><a href="#">Contacts</a><a href="#">Branches</a><a href="#">Credit Management</a><a href="#">Payment Terms</a><a href="#">Customer Classification</a><a href="#">CRM Integration</a><a href="#">Customer 360°</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">target</span><span class="gname">🎯 Lead &amp; Opportunity Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Leads</a><a href="#">Opportunities</a><a href="#">Sales Funnel</a><a href="#">Sales Campaigns</a><a href="#">Territory Management</a><a href="#">Visit Planning</a><a href="#">Activity Tracking</a><a href="#">Competitor Analysis</a><a href="#">AI Lead Scoring</a><a href="#">Win/Loss Analysis</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">tune</span><span class="gname">💰 CPQ (Configure Price Quote)</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Product Configurator</a><a href="#">AAC Block Configurator</a><a href="#">Panel Configurator</a><a href="#">Lintel Configurator</a><a href="#">Custom Products</a><a href="#">Dynamic Pricing</a><a href="#">Discount Matrix</a><a href="#">Margin Calculator</a><a href="#">AI Price Optimization</a><a href="#">Quote Generator</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">inventory_2</span><span class="gname">📦 Product Catalog</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Product Families</a><a href="#">Dimensions</a><a href="#">Density Classes</a><a href="#">Strength Classes</a><a href="#">Fire Ratings</a><a href="#">Thermal Ratings</a><a href="#">Packaging Types</a><a href="#">Certifications</a><a href="#">Technical Datasheets</a><a href="#">BIM Objects</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">description</span><span class="gname">📝 Quotation Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Quotations</a><a href="#">Quote Revision</a><a href="#">Commercial Approval</a><a href="#">Technical Approval</a><a href="#">Financial Approval</a><a href="#">Workflow</a><a href="#">Quote Comparison</a><a href="#">E-Signature</a><a href="#">Validity Management</a><a href="#">Quote Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">shopping_cart</span><span class="gname">🛒 Sales Order Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Sales Orders</a><a href="#">Blanket Orders</a><a href="#">Framework Contracts</a><a href="#">Releases</a><a href="#">Order Validation</a><a href="#">Credit Check</a><a href="#">ATP (Available To Promise)</a><a href="#">CTP (Capable To Promise)</a><a href="#">Order Tracking</a><a href="#">Order Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">event_note</span><span class="gname">📅 Order Fulfillment</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Allocation</a><a href="#">Reservation</a><a href="#">Production Request</a><a href="#">Delivery Scheduling</a><a href="#">Truck Scheduling</a><a href="#">Yard Reservation</a><a href="#">Shipping Planning</a><a href="#">Dispatch</a><a href="#">POD</a><a href="#">Fulfillment KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">construction</span><span class="gname">🏗 Project Sales</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Construction Projects</a><a href="#">BOQ Management</a><a href="#">Project Deliveries</a><a href="#">Delivery Phases</a><a href="#">Site Planning</a><a href="#">Site Stock</a><a href="#">Installation Support</a><a href="#">Project Profitability</a><a href="#">Milestones</a><a href="#">Project Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">handshake</span><span class="gname">🤝 Contract Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Sales Contracts</a><a href="#">Framework Agreements</a><a href="#">Price Agreements</a><a href="#">Rebates</a><a href="#">Bonuses</a><a href="#">SLA</a><a href="#">Renewal</a><a href="#">Amendments</a><a href="#">Compliance</a><a href="#">Contract KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">local_shipping</span><span class="gname">🚚 Delivery Intelligence</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Delivery Orders</a><a href="#">Delivery Status</a><a href="#">Truck Assignment</a><a href="#">GPS Tracking</a><a href="#">Route Optimization</a><a href="#">Delivery ETA</a><a href="#">Customer Notifications</a><a href="#">Delivery Performance</a><a href="#">Claims</a><a href="#">Delivery Analytics</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">payments</span><span class="gname">💵 Pricing &amp; Revenue Management</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Price Lists</a><a href="#">Promotions</a><a href="#">Regional Pricing</a><a href="#">Dynamic Pricing</a><a href="#">Revenue Optimization</a><a href="#">Margin Simulation</a><a href="#">Cost-Based Pricing</a><a href="#">Competitor Pricing</a><a href="#">AI Pricing</a><a href="#">Revenue KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">support_agent</span><span class="gname">👷 Customer Success</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Customer Portal</a><a href="#">Order Tracking</a><a href="#">Invoice Download</a><a href="#">Certificates</a><a href="#">DoP Download</a><a href="#">Technical Documents</a><a href="#">Claims</a><a href="#">Returns</a><a href="#">Satisfaction Surveys</a><a href="#">Loyalty Management</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">query_stats</span><span class="gname">📈 Sales Intelligence</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">Sales Forecast</a><a href="#">Demand Forecast</a><a href="#">Pipeline Analytics</a><a href="#">Revenue Analytics</a><a href="#">Margin Analytics</a><a href="#">Customer Profitability</a><a href="#">Territory Analytics</a><a href="#">Sales Benchmark</a><a href="#">AI Recommendations</a><a href="#">Executive KPIs</a></div></details>
+                                <details class="group"><summary><span class="gicon" aria-hidden="true">psychology</span><span class="gname">🤖 AI Commercial</span><span class="gchevron">▸</span></summary><div class="leaf-items"><a href="#">AI Sales Copilot</a><a href="#">AI Proposal Generator</a><a href="#">AI Tender Assistant</a><a href="#">AI Demand Prediction</a><a href="#">AI Churn Prediction</a><a href="#">AI Cross Selling</a><a href="#">AI Upselling</a><a href="#">AI Customer Segmentation</a><a href="#">AI Negotiation Insights</a><a href="#">A
